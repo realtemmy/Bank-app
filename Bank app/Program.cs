@@ -14,21 +14,10 @@ namespace BankApp
 
         static void Main(string[] args)
         {
-
+            Account defaultAccount = new Account("John Doe", "123123", 10000);
+            accounts.Add(defaultAccount);
             // Load accounts
-            if (File.Exists("account.json"))
-            {
-                string jsonString = File.ReadAllText("account.json");
-                var loadedAccounts = JsonSerializer.Deserialize<List<Account>>(jsonString);
-
-                if (loadedAccounts != null)
-                {
-                    // Filter out invalid accounts
-                    accounts = loadedAccounts.FindAll(acc =>
-                        !string.IsNullOrWhiteSpace(acc.GetName()) &&
-                        !string.IsNullOrWhiteSpace(acc.GetAccountNumber()));
-                }
-            }
+            //loadFromJson();
 
             Console.Write("Enter your name to create an account: ");
             string name = Console.ReadLine();
@@ -142,7 +131,28 @@ namespace BankApp
             }
         }
 
+        public static void SaveToJson()
+        {
+            string jsonString = JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText("account.json", jsonString);
+        }
 
+        public static void loadFromJson()
+        {
+            if (File.Exists("account.json"))
+            {
+                string jsonString = File.ReadAllText("account.json");
+                var loadedAccounts = JsonSerializer.Deserialize<List<Account>>(jsonString);
+
+                if (loadedAccounts != null)
+                {
+                    // Filter out invalid accounts
+                    accounts = loadedAccounts.FindAll(acc =>
+                        !string.IsNullOrWhiteSpace(acc.GetName()) &&
+                        !string.IsNullOrWhiteSpace(acc.GetAccountNumber()));
+                }
+            }
+        }
         public static Account CreateAccount(string name, int balance = 0)
         {
             string accNumber;
@@ -154,8 +164,7 @@ namespace BankApp
             Account account = new Account(name, accNumber, balance);
             accounts.Add(account);
             // Save to json
-            string jsonString = JsonSerializer.Serialize(accounts, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText("account.json", jsonString);
+            SaveToJson();
             return account;
         }
 
@@ -175,7 +184,16 @@ namespace BankApp
         }
     }
 
-    class Account
+    public interface IAccount
+    {
+        string GetName();
+        string GetAccountNumber();
+        double GetBalance();
+        void Deposit(double amount);
+        void Withdraw(double amount);
+    }
+
+    class Account : IAccount
     {
         private string Name { get; set; }
         private string AccountNumber { get; set; }
